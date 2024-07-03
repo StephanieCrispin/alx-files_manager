@@ -24,7 +24,6 @@
     "sha1": "^1.1.1",
     "uuid": "^8.2.0"
   },
-  "type": "module",
   "devDependencies": {
     "@babel/cli": "^7.8.0",
     "@babel/core": "^7.8.0",
