@@ -1,7 +1,8 @@
-import dbClient from '../utils/db.js';
 import sha1 from 'sha1';
 import Queue from 'bull';
-import redisClient from '../utils/redis.js';
+import { ObjectId } from 'mongodb';
+import redisClient from '../utils/redis';
+import dbClient from '../utils/db';
 
 const userQueue = new Queue('userQueue', 'redis://127.0.0.1:6379');
 
@@ -12,7 +13,7 @@ export default class UsersController {
     if (!password) return res.status(400).json({ error: 'Missing password' });
 
     const users = dbClient.db.collection('users');
-    const user = await users.find({ email: email });
+    const user = await users.find({ email });
 
     if (user) return res.status(400).json({ error: 'Already exists' });
 
@@ -23,16 +24,17 @@ export default class UsersController {
         email,
         password: hashedPassword,
       });
-      userQueue.add({ userId: result.insertedId });
+      userQueue.add({ userId: res.insertedId });
 
-      return response.status(201).json({ id: newUser.insertedId, email });
+      return req.status(201).json({ id: newUser.insertedId, email });
     } catch (err) {
       console.log(err);
     }
+    return null;
   }
 
   static async getDisconnect(req, res) {
-    const authToken = request.headers('X-Token');
+    const authToken = req.headers('X-Token');
     const token = `auth_${authToken}`;
     const users = dbClient.db.collection('users');
     try {
@@ -41,9 +43,10 @@ export default class UsersController {
       const user = users.findOne({ _id: idConverted });
 
       if (!user) return res.status(401).json({ error: 'Unauthorized' });
-      return response.status(200).json({ id: newUser.insertedId, email });
+      return res.status(200).json({ id: user.insertedId, email: user.email });
     } catch (err) {
       res.status(200).json({ error: 'Unauthorized' });
     }
+    return null;
   }
 }
